@@ -24,6 +24,10 @@ Démarre le développement d'une feature à partir d'un plan validé par `planif
 
 Crée un diagramme d'architecture / de design system dans Figma (FigJam) à partir d'une description de projet : recherche les best practices pour la stack décrite, traduit l'architecture dans le vocabulaire strict qu'attend le renderer Figma, puis génère le diagramme.
 
+### [`landing-page-builder`](skills/landing-page-builder/SKILL.md)
+
+Guide la création d'une landing page one-page codée directement dans la codebase, via un wizard en 5 étapes (contexte, objectif, direction visuelle, sections, technique) validé par un récapitulatif avant toute écriture de code. Produit un composant par section, les tokens de design, le SEO de base, l'accessibilité WCAG 2.2 AA, des pages légales en stub et une checklist finale. Inclut un script de vérification des contrastes.
+
 ## Licence
 
 MIT — voir [LICENSE](LICENSE).
