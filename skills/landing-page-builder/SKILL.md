@@ -1,6 +1,6 @@
 ---
 name: landing-page-builder
-description: Guide la création d'une landing page one-page codée directement dans la codebase du projet, via un wizard en 5 étapes (contexte, objectif, direction visuelle, sections, technique) avant toute écriture de code. Produit du code fonctionnel (un composant par section, tokens de design, SEO de base, WCAG 2.2 AA, pages légales en stub), pas une maquette. Utilise ce skill dès que l'utilisateur dit "/landing-page-builder", "crée une landing page", "page d'atterrissage", "page de vente", "one-page", "site vitrine une page", "page de capture de leads", "page d'inscription à un essai", "hero + pricing + FAQ", même s'il ne dit pas "wizard" ni ne précise la stack.
+description: Guide la création d'une landing page one-page codée directement dans la codebase du projet, via un wizard en 5 étapes (contexte, objectif, direction visuelle, sections, technique) avant toute écriture de code. Produit du code fonctionnel (un composant par section, tokens de design, SEO de base, WCAG 2.2 AA, pages légales en stub, images libres de droit recherchées et créditées quand une section s'y prête), pas une maquette. Utilise ce skill dès que l'utilisateur dit "/landing-page-builder", "crée une landing page", "page d'atterrissage", "page de vente", "one-page", "site vitrine une page", "page de capture de leads", "page d'inscription à un essai", "hero + pricing + FAQ", même s'il ne dit pas "wizard" ni ne précise la stack.
 ---
 
 # Landing Page Builder
@@ -13,9 +13,9 @@ Une landing page se joue sur un seul objectif et une cible précise. Si on code 
 
 ## Périmètre
 
-**Inclus** : une seule page (one-page, sections ancrées) ; composants de section, layout, responsive, styles ; design system local (tokens couleur, typo, spacing) ; textes générés comme première version à valider ; pages légales en stub si absentes, avec liens corrects dans le footer ; SEO de base (title, meta description, Open Graph, HTML sémantique) ; accessibilité WCAG 2.2 AA.
+**Inclus** : une seule page (one-page, sections ancrées) ; composants de section, layout, responsive, styles ; design system local (tokens couleur, typo, spacing) ; textes générés comme première version à valider ; pages légales en stub si absentes, avec liens corrects dans le footer ; SEO de base (title, meta description, Open Graph, HTML sémantique) ; accessibilité WCAG 2.2 AA ; recherche, sélection et intégration d'images libres de droit (Unsplash, Pexels, Pixabay, Openverse…) pour les sections où une image sert la conversion, avec licences vérifiées et crédits tracés.
 
-**Exclus — à annoncer clairement si l'utilisateur le demande, puis proposer de s'en tenir au périmètre** : reste du site (pages intérieures, blog, app) ; backend, base de données, auth, paiement ; intégration CMS ; déploiement et DNS ; rédaction juridique réelle (mentions légales, CGV) ; production d'images, logos, vidéos ; tracking analytics au-delà d'un emplacement prévu (un commentaire / composant vide `<Analytics />`).
+**Exclus — à annoncer clairement si l'utilisateur le demande, puis proposer de s'en tenir au périmètre** : reste du site (pages intérieures, blog, app) ; backend, base de données, auth, paiement ; intégration CMS ; déploiement et DNS ; rédaction juridique réelle (mentions légales, CGV) ; production d'images, logos, vidéos (on cherche des images libres, on n'en crée pas) ; tracking analytics au-delà d'un emplacement prévu (un commentaire / composant vide `<Analytics />`).
 
 Un formulaire est inclus côté front (champs, labels, validation, états), mais son envoi réel dépend d'un backend exclu : brancher une `action`/handler configurable ou un `TODO` explicite, jamais un faux succès silencieux.
 
@@ -73,21 +73,22 @@ Détecte la stack dans la codebase **avant de poser la question**, puis fais con
 - **Ne jamais introduire une dépendance sans demander.** Si une police, une icône ou un composant exige un paquet, propose d'abord l'alternative sans dépendance (police système, SVG inline).
 - **Langue** : propose celle de l'utilisateur. Plusieurs langues seulement si l'i18n est déjà en place — alors passe par ses clés de traduction.
 - **Contenu** : réel (fourni par l'utilisateur) ou textes générés. Les textes générés sont une **première version à valider** : marque-les clairement (commentaire `TODO(contenu à valider)` et liste dans la checklist finale). N'invente jamais de chiffres, témoignages, logos clients ou noms de clients présentés comme réels : utilise des placeholders évidents (« Témoignage client à venir », « [X] utilisateurs »).
-- **Images** : placeholders dimensionnés (largeur/hauteur explicites, `aspect-ratio`), jamais d'images inventées.
+- **Images** : liste d'abord les emplacements où une image servirait la page, d'après les sections retenues et le tableau « Quand une image se justifie » de `references/images-libres.md` (ex. hero d'un site vitrine, fond du CTA final) — et ceux où une image de banque serait trompeuse (témoignages, fondateur, équipe, produits, réalisations). Puis propose : (1) images libres de droit recherchées par toi pour les emplacements adaptés, placeholders ailleurs (défaut si au moins un emplacement s'y prête) ; (2) images fournies par l'utilisateur ; (3) placeholders partout (défaut si aucun emplacement ne s'y prête, ex. SaaS dont toutes les images sont des captures produit). Option 1 : lis `references/images-libres.md` et fais la recherche **avant le récapitulatif** (2 à 3 candidats par emplacement, vérifiés visuellement et côté licence). Les placeholders restent dimensionnés (largeur/hauteur explicites, `aspect-ratio`) ; jamais d'images inventées.
 - **Pages légales** : lie celles qui existent ; crée des stubs pour les autres (voir « Légal »).
 - Si le projet n'a pas de stack (dossier vide), propose HTML/CSS/JS pur (défaut, zéro dépendance) ou demande quel framework initialiser — ne lance pas d'installation sans accord.
 
 ## Récapitulatif avant écriture
 
-Après l'étape 5, présente un récapitulatif compact : contexte, objectif + CTA, direction visuelle (palette avec ratios de contraste, typo, ton), liste finale des sections, stack, langue, fichiers qui seront créés/modifiés (y compris le fichier de tokens). **Attends la validation explicite** avant d'écrire du code. Les modifications demandées à ce stade se font sur le récapitulatif, pas dans le code.
+Après l'étape 5, présente un récapitulatif compact : contexte, objectif + CTA, direction visuelle (palette avec ratios de contraste, typo, ton), liste finale des sections, stack, langue, images (tableau des candidats : section, lien source, auteur, licence, attribution requise — ou « placeholder »), fichiers qui seront créés/modifiés (y compris le fichier de tokens, les images et le fichier de crédits). **Attends la validation explicite** avant d'écrire du code. Les modifications demandées à ce stade se font sur le récapitulatif, pas dans le code.
 
 ## Écriture du code
 
 1. **Tokens de design** dans le fichier de configuration du projet (thème Tailwind / `@theme`, variables CSS `:root`, fichier de tokens existant) : couleurs (+ états hover/focus/disabled), typo (famille, échelle, interlignes), spacing, rayons, ombres. Étends l'existant, n'écrase rien.
 2. **Un fichier par section** (une section = un composant) plus **la page qui les assemble**. Props typées si TypeScript. Suis les conventions de nommage et de dossiers du projet.
 3. **Contenu centralisé** (un objet/fichier de contenu ou les clés i18n) pour que l'utilisateur remplace les textes sans toucher aux composants.
-4. **Pages légales** (stubs) + **liens du footer**.
-5. Vérifie que ça tourne : lance le build/lint/typecheck du projet s'il existe, et si possible le serveur de dev. Vérifie le rendu à **375px** et au-dessus (navigateur si disponible). Dis ce que tu as vraiment vérifié et ce que tu n'as pas pu vérifier.
+4. **Images** retenues (si option images libres) : téléchargées dans le dossier d'assets du projet, au bon format et à la bonne taille, référencées dans le contenu centralisé, fichier `CREDITS.md` à côté, attribution affichée quand la licence l'exige (voir `references/images-libres.md`).
+5. **Pages légales** (stubs) + **liens du footer**.
+6. Vérifie que ça tourne : lance le build/lint/typecheck du projet s'il existe, et si possible le serveur de dev. Vérifie le rendu à **375px** et au-dessus (navigateur si disponible). Dis ce que tu as vraiment vérifié et ce que tu n'as pas pu vérifier.
 
 ## Règles de qualité (appliquées sans demander)
 
@@ -114,6 +115,7 @@ Après l'étape 5, présente un récapitulatif compact : contexte, objectif + CT
 - Copyright avec **l'année courante** (calculée, pas écrite en dur).
 - Bandeau cookies **uniquement si des cookies non essentiels existent** ; alors « Refuser » aussi accessible que « Accepter » (même niveau, même visibilité). Sans traceur, pas de bandeau.
 - Coordonnées de contact réelles et identification de l'éditeur : demande-les, ne les invente pas ; placeholders marqués sinon.
+- **Images de tiers** : uniquement sous licence vérifiée sur la page source au moment de l'utilisation, crédits tracés dans `CREDITS.md`, attribution affichée quand la licence l'exige ; jamais une photo de banque présentée comme un client, un membre de l'équipe ou un produit réel.
 - **Rappelle que la rédaction juridique relève d'un professionnel** : les stubs ne sont pas des textes juridiques.
 
 ## Sortie finale
@@ -121,4 +123,4 @@ Après l'étape 5, présente un récapitulatif compact : contexte, objectif + CT
 1. Le récapitulatif validé (déjà présenté).
 2. Le code : un fichier par section + la page d'assemblage.
 3. Les tokens dans le fichier de configuration du projet.
-4. **Checklist finale** en quatre blocs — Conversion, Accessibilité, SEO, Légal — chaque point marqué ✅ fait / ⚠️ à ta charge. Liste explicitement ce qui reste à l'utilisateur : textes à valider, vrais témoignages et chiffres, images et image OG, coordonnées et éditeur, rédaction juridique par un professionnel, branchement du formulaire, analytics, déploiement. Ne coche ✅ que ce que tu as réellement vérifié.
+4. **Checklist finale** en quatre blocs — Conversion, Accessibilité, SEO, Légal — chaque point marqué ✅ fait / ⚠️ à ta charge. Liste explicitement ce qui reste à l'utilisateur : textes à valider, vrais témoignages et chiffres, images (remplacer les photos de banque par de vraies photos de la marque quand c'est possible) et image OG, crédits photos à conserver, coordonnées et éditeur, rédaction juridique par un professionnel, branchement du formulaire, analytics, déploiement. Ne coche ✅ que ce que tu as réellement vérifié.

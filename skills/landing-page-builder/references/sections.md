@@ -24,18 +24,18 @@ Le socle (navbar, hero, preuve sociale, CTA final, footer) est toujours présent
 ## Détail des sections (ordre de référence)
 
 1. **Navbar sticky** — logo, 3 à 4 ancres maximum, CTA en bouton. Menu repliable en mobile (bouton avec `aria-expanded`, accessible au clavier). Hauteur fixe pour éviter les sauts ; `scroll-margin-top` sur les sections ancrées.
-2. **Hero** — H1 = le résultat désiré pour la cible. Sous-titre en mots simples qui explique. 3 bénéfices (pas des fonctionnalités). CTA principal (+ secondaire éventuel). Preuve sociale immédiate : rangée d'avatars + « X utilisateurs » (placeholders marqués si pas de vrais chiffres). Visuel : placeholder dimensionné, jamais en lazy-load (c'est le LCP).
+2. **Hero** — H1 = le résultat désiré pour la cible. Sous-titre en mots simples qui explique. 3 bénéfices (pas des fonctionnalités). CTA principal (+ secondaire éventuel). Preuve sociale immédiate : rangée d'avatars + « X utilisateurs » (placeholders marqués si pas de vrais chiffres). Visuel : image libre de droit si le type de page s'y prête (vitrine, événement, service local — voir `images-libres.md`), capture produit réelle pour un SaaS, sinon placeholder dimensionné ; jamais en lazy-load (c'est le LCP). Avatars de preuve sociale : placeholders, jamais de visages de banque.
 3. **Problème / solution** — 5 points douloureux vécus sans le produit, face à 5 bénéfices correspondants, alignés deux à deux. Écris les problèmes du point de vue de la cible, avec ses mots.
-4. **Comment ça marche** — 3 étapes illustrées maximum, liste ordonnée `<ol>`. Verbes d'action courts.
+4. **Comment ça marche** — 3 étapes illustrées maximum (icônes SVG ou illustrations libres type unDraw, teintées avec la couleur primaire), liste ordonnée `<ol>`. Verbes d'action courts.
 5. **CTA intermédiaire** — le même CTA principal + une levée d'objection (« pas d'expérience requise », « sans carte bancaire », « annulable à tout moment »). Choisis l'objection la plus probable pour la cible.
 6. **Démo vidéo (~3 min)** — conteneur à ratio fixe (16:9), poster en placeholder, lecture à la demande (pas d'autoplay avec son), sous-titres/transcription à prévoir. Ne produit aucune vidéo ; ne charge pas d'iframe tierce sans demander (cookies/traceurs) — préfère un facade « cliquer pour lire ».
 7. **Fonctionnalités détaillées** — en visuel plutôt qu'en texte long : cartes ou alternance visuel/texte, chaque fonctionnalité formulée par son bénéfice.
-8. **Storytelling fondateur** — qui tu es, le problème que tu as vécu, comment tu l'as résolu. Première personne. Photo en placeholder dimensionné. Ne rien inventer sur le fondateur : demande ou laisse des champs marqués.
+8. **Storytelling fondateur** — qui tu es, le problème que tu as vécu, comment tu l'as résolu. Première personne. Photo en placeholder dimensionné — jamais une photo de banque. Ne rien inventer sur le fondateur : demande ou laisse des champs marqués.
 9. **Tarifs** — 2 ou 3 offres, une mise en avant visuellement (et sémantiquement : « Recommandé », pas seulement la couleur). Prix barré si promotion (`<del>` + texte accessible « ancien prix »). Option accès à vie si lancement. Prix **toujours visibles**. N'invente pas de prix : placeholders marqués si non fournis.
 10. **FAQ** — objections courantes (prix, difficulté, délai, annulation, support, données). Utilise `<details>/<summary>` ou un accordéon accessible (boutons avec `aria-expanded`). 5 à 8 questions.
 11. **Wall of love** — grille de témoignages. Placeholders marqués « à remplacer par de vrais témoignages » ; jamais de faux témoignages présentés comme réels.
-12. **CTA final** — rappelle le résultat désiré + CTA principal + levée d'objection. Dernier moment de décision : une seule action.
-13. **Footer** — logo, liens de navigation (ancres), liens légaux (pages distinctes), réseaux sociaux (liens avec nom accessible, pas icône seule sans `aria-label`), copyright avec l'année courante, identification de l'éditeur/contact.
+12. **CTA final** — rappelle le résultat désiré + CTA principal + levée d'objection. Fond photo d'ambiance libre possible, avec voile assurant le contraste du texte. Dernier moment de décision : une seule action.
+13. **Footer** — logo, liens de navigation (ancres), liens légaux (pages distinctes), ligne « Crédits photos » si des images libres sont utilisées, réseaux sociaux (liens avec nom accessible, pas icône seule sans `aria-label`), copyright avec l'année courante, identification de l'éditeur/contact.
 
 ## Règle des témoignages
 
@@ -45,7 +45,7 @@ Des témoignages isolés (1 citation courte + nom/rôle) sont **répartis entre 
 
 - **Formulaire (leads)** — le minimum de champs (idéalement email seul, + nom si vraiment utile). Chaque champ a un `<label>` visible, `autocomplete` adapté, erreurs en texte associé (`aria-describedby`), pas uniquement par la couleur. CTA orienté résultat (« Recevoir mon guide »). Mention de consentement/lien vers la politique de confidentialité. L'envoi réel dépend d'un backend (hors périmètre) : `action` configurable ou `TODO` explicite.
 - **Calendrier (rendez-vous)** — emplacement pour un embed de prise de rendez-vous (Calendly, Cal.com…) : demande avant d'intégrer un script tiers ; sinon bouton vers l'URL de réservation.
-- **Produits phares (e-commerce)** — 3 à 6 produits, prix visibles, images placeholders dimensionnées. Pas de panier ni de paiement (hors périmètre) : lien vers la fiche/boutique.
+- **Produits phares (e-commerce)** — 3 à 6 produits, prix visibles, images placeholders dimensionnées (les vraies photos produit sont à fournir ; jamais de photo de banque d'un autre produit). Pas de panier ni de paiement (hors périmètre) : lien vers la fiche/boutique.
 - **Garanties et livraison** — délais, retours, paiement sécurisé, support ; CGV requises dans le footer.
-- **Valeurs / Réalisations (notoriété)** — 3 à 4 valeurs avec une preuve concrète chacune ; réalisations en grille avec visuels placeholders.
+- **Valeurs / Réalisations (notoriété)** — 3 à 4 valeurs avec une preuve concrète chacune ; réalisations en grille avec visuels placeholders (vrais projets uniquement). Les valeurs peuvent porter une image libre d'ambiance.
 - **Contact** — coordonnées réelles (email, téléphone, adresse) fournies par l'utilisateur, formulaire court optionnel.

@@ -27,6 +27,7 @@
 - Informative : `alt` descriptif de la fonction/du contenu. Décorative : `alt=""`. Logo-lien : `alt` = nom de l'entreprise (ou destination).
 - SVG décoratif : `aria-hidden="true"`, `focusable="false"`. Icône-bouton : nom accessible (`aria-label`).
 - Vidéo : sous-titres/transcription à prévoir ; pas d'autoplay avec son ; contrôles clavier.
+- Texte superposé à une photo : voile (overlay) dont l'opacité est réglée pour que le texte atteigne 4,5:1 contre la zone la plus défavorable ; crédit d'image (`<figcaption>` ou footer) lisible et contrasté lui aussi.
 
 **Clavier et focus** (SC 2.1.1, 2.4.3, 2.4.7, 2.4.11, 2.5.8)
 - Tout est atteignable et actionnable au clavier ; ordre de tabulation = ordre visuel ; pas de `tabindex` positif.
@@ -51,7 +52,7 @@
 - `<title>` unique, ~50–60 caractères : bénéfice + marque.
 - `<meta name="description">` ~140–160 caractères, orientée bénéfice et CTA.
 - `<link rel="canonical">` (URL à confirmer par l'utilisateur).
-- Open Graph : `og:title`, `og:description`, `og:type=website`, `og:url`, `og:image` (+ `og:image:alt`), `twitter:card=summary_large_image`. L'image OG n'est pas produite par le skill : placeholder signalé 1200×630.
+- Open Graph : `og:title`, `og:description`, `og:type=website`, `og:url`, `og:image` (+ `og:image:alt`), `twitter:card=summary_large_image`. L'image OG n'est pas produite par le skill : placeholder signalé 1200×630, ou recadrage d'une image libre retenue (licence vérifiée, voir `images-libres.md`).
 - `<meta name="viewport" content="width=device-width, initial-scale=1">`, `<meta charset="utf-8">`.
 - Favicon : référencé, fichier à fournir.
 - HTML sémantique et titres cohérents font office de SEO on-page ; texte réel dans le DOM (pas dans des images).
@@ -66,6 +67,8 @@ Pages **distinctes**, liées depuis le footer :
 - Politique de confidentialité.
 - Politique de cookies.
 - CGV — si vente en ligne uniquement.
+
+Si des images libres de droit sont utilisées : mentionner les crédits photos (footer ou mentions légales) et, si des images sont chargées depuis un CDN tiers (hotlink), le signaler dans la politique de confidentialité.
 
 **Pour chaque page existante** : lie-la (ne l'écrase pas). **Si absente** : crée un stub, route ou fichier selon la stack, avec :
 - un titre H1, une bannière claire « Page provisoire — contenu à faire rédiger par un professionnel du droit » ;

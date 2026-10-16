@@ -26,7 +26,7 @@ Crée un diagramme d'architecture / de design system dans Figma (FigJam) à part
 
 ### [`landing-page-builder`](skills/landing-page-builder/SKILL.md)
 
-Guide la création d'une landing page one-page codée directement dans la codebase, via un wizard en 5 étapes (contexte, objectif, direction visuelle, sections, technique) validé par un récapitulatif avant toute écriture de code. Produit un composant par section, les tokens de design, le SEO de base, l'accessibilité WCAG 2.2 AA, des pages légales en stub et une checklist finale. Inclut un script de vérification des contrastes.
+Guide la création d'une landing page one-page codée directement dans la codebase, via un wizard en 5 étapes (contexte, objectif, direction visuelle, sections, technique) validé par un récapitulatif avant toute écriture de code. Produit un composant par section, les tokens de design, le SEO de base, l'accessibilité WCAG 2.2 AA, des pages légales en stub et une checklist finale. Recherche et intègre des images libres de droit (Unsplash, Pexels, Pixabay, Openverse…) pour les sections qui s'y prêtent, avec licences vérifiées et crédits tracés. Inclut un script de vérification des contrastes et un script de recherche d'images Openverse.
 
 ## Licence
 
