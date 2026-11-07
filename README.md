@@ -14,7 +14,7 @@ cp -r skills/<nom-du-skill> ~/.claude/skills/
 
 ### [`planifier`](skills/planifier/SKILL.md)
 
-Planifie l'exécution d'une tâche de développement (feature, refactoring, migration, bugfix) en explorant le projet et en produisant un plan structuré, validé par l'utilisateur avant tout développement.
+Planifie l'exécution d'une tâche de développement (feature, refactoring, migration, bugfix) en explorant le projet et en produisant un plan structuré, validé par l'utilisateur avant tout développement. S'utilise uniquement en plan mode (entre en plan mode si besoin) et se valide via `ExitPlanMode`.
 
 ### [`coder`](skills/coder/SKILL.md)
 
@@ -22,7 +22,7 @@ Démarre le développement d'une feature à partir d'un plan validé par `planif
 
 ### [`diagramme-architecture`](skills/diagramme-architecture/SKILL.md)
 
-Crée un diagramme d'architecture / de design system dans Figma (FigJam) à partir d'une description de projet : recherche les best practices pour la stack décrite, traduit l'architecture dans le vocabulaire strict qu'attend le renderer Figma, puis génère le diagramme.
+Crée un diagramme d'architecture / de design system dans Excalidraw (fichier `.excalidraw` éditable) à partir d'une description de projet : recherche les best practices pour la stack décrite, cherche sur le web le logo officiel de chaque techno, puis génère le diagramme avec les logos intégrés via `scripts/build_excalidraw.py`.
 
 ### [`landing-page-builder`](skills/landing-page-builder/SKILL.md)
 

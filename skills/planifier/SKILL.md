@@ -1,11 +1,25 @@
 ---
 name: planifier
-description: Planifie l'exécution d'une tâche de développement (feature, refactoring, migration, bugfix, ajout d'API, etc.) en explorant le projet et en produisant un plan structuré, validé par l'utilisateur, qui servira de base à `/coder`. Déclenche ce skill dès que l'utilisateur dit "/planifier", "planifier", "préparer une feature", "structurer un refactoring", "analyser une migration", "fais-moi un plan", ou demande explicitement à réfléchir avant de coder. À utiliser même si l'utilisateur ne dit pas "plan" mais formule clairement une intention de cadrer un travail avant de l'implémenter.
+description: Planifie l'exécution d'une tâche de développement (feature, refactoring, migration, bugfix, ajout d'API, etc.) en explorant le projet et en produisant un plan structuré, validé par l'utilisateur, qui servira de base à `/coder`. Ce skill ne fonctionne qu'en plan mode — s'il est invoqué hors plan mode, il demande d'abord à y entrer (EnterPlanMode) et ne fait rien d'autre tant que ce n'est pas le cas. Déclenche ce skill dès que l'utilisateur dit "/planifier", "planifier", "préparer une feature", "structurer un refactoring", "analyser une migration", "fais-moi un plan", ou demande explicitement à réfléchir avant de coder. À utiliser même si l'utilisateur ne dit pas "plan" mais formule clairement une intention de cadrer un travail avant de l'implémenter.
 ---
 
 # Planifier
 
 Analyse le contexte d'une tâche de développement et produit un plan clair, structuré, validé avant tout développement.
+
+## Prérequis obligatoire : être en plan mode
+
+Ce skill ne s'utilise **qu'en plan mode**. C'est la première chose à vérifier, avant toute exploration ou question.
+
+- **Déjà en plan mode** (le système l'indique par un message « Plan mode is active ») → continue normalement.
+- **Pas en plan mode** → appelle immédiatement l'outil `EnterPlanMode` (à charger via `ToolSearch` s'il est différé). Ne lis aucun fichier, ne pose aucune question de cadrage avant.
+- **L'utilisateur refuse l'entrée en plan mode** (ou l'outil est indisponible) → arrête-toi. Réponds simplement : *« Le skill /planifier s'utilise en plan mode. Active-le avec Shift+Tab (ou `/plan`) puis relance `/planifier`. »* Ne produis pas de plan hors plan mode.
+
+Une fois en plan mode, respecte ses règles :
+- Exploration **en lecture seule** uniquement (Read, Glob, Grep, commandes non modifiantes). Aucune modification de code, aucune commande Git qui écrit.
+- Le plan est **écrit dans le fichier de plan** indiqué par le système (seul fichier modifiable), au format décrit plus bas.
+- Les questions de cadrage passent par `AskUserQuestion`.
+- La validation finale passe par `ExitPlanMode` (voir « Validation avec l'utilisateur »).
 
 ## Pourquoi ce skill existe
 
@@ -15,15 +29,15 @@ Coder sans plan sur une tâche non-triviale mène à des allers-retours, du code
 
 Toutes les tâches ne méritent pas le même niveau de détail. Évalue rapidement la complexité avant de plonger :
 
-- **Tâche triviale** (1-3 lignes, fix typo, renommage local, ajout de log) → **pas de plan formel**. Propose directement la modification à l'utilisateur en 2-3 lignes et passe à l'implémentation. Forcer un plan ici fait perdre du temps à tout le monde.
+- **Tâche triviale** (1-3 lignes, fix typo, renommage local, ajout de log) → **pas de plan formel**. Écris dans le fichier de plan la modification en 2-3 lignes et appelle directement `ExitPlanMode`. Forcer un plan complet ici fait perdre du temps à tout le monde.
 - **Tâche moyenne** (1-5 fichiers, fonctionnalité circonscrite) → plan complet selon le format ci-dessous, mais reste concis (pas besoin d'épiloguer).
 - **Tâche large** (migration, refactor multi-modules, nouvelle feature avec UI + back + DB) → plan détaillé, et si vraiment énorme, **propose de la découper en sous-tâches** avant de planifier chacune.
 
-Si tu hésites sur la catégorie, demande à l'utilisateur : *"Tâche rapide ou je fais un plan complet ?"*
+Si tu hésites sur la catégorie, demande à l'utilisateur via `AskUserQuestion` : *"Tâche rapide ou je fais un plan complet ?"*
 
 ## Ce dont tu as besoin
 
-Pour une tâche moyenne ou large, trois choses minimum doivent être présentes dans la conversation. Si elles manquent, demande-les **en une seule fois groupée** :
+Pour une tâche moyenne ou large, trois choses minimum doivent être présentes dans la conversation. Si elles manquent, demande-les **en une seule fois groupée** (un seul appel `AskUserQuestion`) :
 
 1. **Titre** de la tâche *(court, explicite — ex: "Ajout de l'authentification OAuth Google")*
 2. **Description** *(le quoi et le pourquoi — ex: "Permettre aux utilisateurs de se connecter via Google. Réduit la friction d'inscription.")*
@@ -46,13 +60,13 @@ L'objectif est de planifier avec les **vraies** contraintes du projet, pas avec 
 
 ## Quand la tâche est ambiguë : proposer 2 approches
 
-Si plusieurs designs raisonnables existent (ex: "implémenter une side-car vs intégrer dans le service existant", "REST vs WebSocket", "champ JSON vs table dédiée"), **ne tranche pas seul**. Présente brièvement 2 options avec leurs trade-offs, demande à l'utilisateur de choisir, puis détaille le plan complet pour l'option retenue.
+Si plusieurs designs raisonnables existent (ex: "implémenter une side-car vs intégrer dans le service existant", "REST vs WebSocket", "champ JSON vs table dédiée"), **ne tranche pas seul**. Présente brièvement 2 options avec leurs trade-offs via `AskUserQuestion` (option recommandée en premier), laisse l'utilisateur choisir, puis détaille le plan complet pour l'option retenue.
 
 C'est mieux qu'un plan unique imposé qu'il faudra refaire.
 
 ## Format du plan à produire
 
-Présente le plan en français, exactement avec cette structure :
+Écris le plan dans le fichier de plan (en français), exactement avec cette structure :
 
 ---
 
@@ -133,13 +147,15 @@ Pour donner une idée concrète, voici à quoi un plan correctement rempli resse
 
 ## Validation avec l'utilisateur
 
-Une fois le plan affiché, demande explicitement à l'utilisateur de le valider ou de demander des ajustements. Sois naturel — pas besoin de réciter une formule rigide. Par exemple :
+Une fois le plan écrit dans le fichier de plan, appelle `ExitPlanMode` : c'est cet outil qui présente le plan à l'utilisateur et lui demande de l'approuver. Ne demande **pas** la validation en texte libre ni via `AskUserQuestion` (« Le plan te va ? »).
 
-> "Voilà le plan. Tu veux qu'on ajuste quelque chose, ou je passe la main à `/coder` pour démarrer ?"
+- **Plan refusé / ajustements demandés** → reste en plan mode, mets à jour le fichier de plan, puis rappelle `ExitPlanMode`.
+- **Plan approuvé** → le rôle du skill s'arrête là. Indique en une ligne que l'utilisateur peut lancer `/coder` pour démarrer l'implémentation.
 
 ## Ce que ce skill ne fait PAS
 
-- Il ne code rien — son rôle s'arrête à la validation du plan par l'utilisateur
+- Il ne s'exécute jamais hors plan mode — pas d'exploration, pas de plan tant que le plan mode n'est pas actif
+- Il ne code rien — son rôle s'arrête à la validation du plan par l'utilisateur (`ExitPlanMode`)
 - Il ne crée pas de branche, ne commit pas, ne touche pas à Git
 - Il ne lance pas `/coder` automatiquement — l'utilisateur déclenche la suite quand il est prêt
 - Il n'impose pas un plan formel pour une modif triviale — bon sens avant tout
