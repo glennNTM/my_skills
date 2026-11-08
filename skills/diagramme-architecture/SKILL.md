@@ -1,87 +1,82 @@
 ---
 name: diagramme-architecture
-description: Crée un diagramme d'architecture / de design system dans Figma (FigJam) à partir d'une description de projet. Recherche les best practices sur le web et les applique au découpage, puis génère le diagramme via le MCP Figma (generate_diagram, layout architecture). Déclenche ce skill dès que l'utilisateur dit "/diagramme", "fais un diagramme d'architecture", "schéma de mon système", "diagramme de design system", "représente/dessine mon archi dans Figma", ou décrit une stack/un système et veut une représentation visuelle de l'architecture — même s'il ne mentionne pas explicitement Figma.
+description: Crée un diagramme d'architecture / de system design dans Excalidraw (fichier .excalidraw + ARCHITECTURE.md) avec les logos officiels des technos. Trois modes, chacun orchestré avec des agents spécialisés — (1) dans une codebase, il scanne le projet et dessine l'état actuel, puis propose une architecture cible améliorée ; (2) pour un produit existant (Twitch, Spotify…), il recherche sa stack réelle sur le web ; (3) à partir d'une description, il conçoit l'architecture en s'appuyant sur les bonnes pratiques. Déclenche ce skill dès que l'utilisateur dit "/diagramme", "fais un diagramme d'architecture", "system design de…", "schéma de mon système", "dessine l'archi de ce projet / de cette codebase", "architecture de <produit>", ou décrit une stack et veut une représentation visuelle — même s'il ne mentionne pas Excalidraw.
 ---
 
-# Diagramme d'architecture
+# Diagramme d'architecture (Excalidraw) — orchestrateur
 
-Transforme une description de système en un diagramme d'architecture dans **FigJam**, via le MCP Figma. Le skill fait le travail de fond : chercher les bonnes pratiques pour la stack décrite, traduire l'architecture dans le vocabulaire strict qu'attend l'outil, puis générer.
+Ce skill transforme un système (une codebase, un produit existant ou une description) en un **diagramme Excalidraw** éditable avec les **logos officiels** des technos, plus un **`ARCHITECTURE.md`** lisible par les devs et les agents IA (briques, flux, décisions, évolutions).
 
-## Pourquoi ce skill existe
+Le travail est réparti entre **4 agents spécialisés** (définis dans `~/.claude/agents/`) et la conversation principale, qui les orchestre et parle à l'utilisateur :
 
-Faire un bon diagramme d'archi demande deux choses que l'on bâcle souvent : **un découpage juste** (les bonnes couches, les composants qui manquent — cache, file d'attente, CDN, load balancer) et **une granularité correcte** (un nœud = une unité déployable indépendamment, pas un module interne). Ce skill impose une étape de recherche des best practices avant de dessiner, et applique les règles strictes du renderer Figma pour éviter un diagramme qui rend mal ou qui ment sur l'architecture réelle.
+| Agent (`subagent_type`) | Rôle |
+|---|---|
+| `archi-explorateur-code` | Lit la codebase en lecture seule ; rend l'inventaire de l'existant, chaque élément avec sa preuve `fichier:ligne`, et une spec « état actuel » |
+| `archi-chercheur-produit` | Recherche sur le web la stack réelle d'un produit existant, avec sources et niveau de confiance |
+| `archi-chercheur-bonnes-pratiques` | Recherche les architectures de référence et rend des recommandations adaptées à l'échelle, priorisées et sourcées |
+| `archi-expert-senior` | Expert senior en system design : conçoit l'architecture cible ou nouvelle, écrit la spec, génère et vérifie le diagramme |
 
-## Workflow — 4 étapes
+La référence technique commune (format de la spec, logos, script, vérification) est dans **`references/spec-et-generation.md`** : lis-la avant de générer toi-même un diagramme. Les principes de découpage sont dans `references/best-practices.md`.
 
-### Étape 1 — Comprendre le système
+**Les agents ne peuvent ni se lancer entre eux ni parler à l'utilisateur** : c'est toi qui les lances (outil Agent, avec le `subagent_type` ci-dessus), qui leur transmets le contexte (chemins, contraintes, rapports des autres agents) et qui poses les questions. Si un agent n'est pas disponible dans la session, lis son fichier dans `~/.claude/agents/<nom>.md` et applique ses instructions toi-même.
 
-Pars de la description fournie. Si des éléments essentiels manquent, demande-les **groupés en une fois** (ne noie pas l'utilisateur sous les questions) :
+## Étape 0 — Choisir le mode
 
-- **Le but** du système en une phrase (ce que fait l'appli).
-- **La stack** : langages, frameworks, bases de données, services managés, tiers externes.
-- **Le niveau de détail voulu** : par défaut, vise le niveau « conteneurs » du modèle C4 (services/bases déployables), pas le détail des modules internes — c'est le plus utile pour un diagramme de design system.
+| Situation | Mode |
+|---|---|
+| L'utilisateur parle de « ce projet », « cette codebase », « mon API », ou le dossier courant contient du code (manifeste de dépendances, `docker-compose`, sources) | **A. Codebase** |
+| Il nomme un produit existant qui n'est pas le sien (« architecture de Twitch ») | **B. Produit existant** |
+| Il décrit un système à concevoir (« une app qui… avec FastAPI, Redis… ») | **C. Conception** |
 
-Si le projet est un vrai codebase, explore-le (package.json, docker-compose, routes, config de déploiement) plutôt que de deviner. Une archi extraite du code réel vaut toujours mieux qu'une archi reconstruite de mémoire.
+En cas de doute (par ex. une description fournie *dans* une codebase), demande-le en une question.
 
-### Étape 2 — Rechercher les best practices et les appliquer
+## Mode A — Codebase : l'existant d'abord, la cible ensuite
 
-Avant de figer le découpage, utilise `WebSearch` pour le confronter à des architectures de référence **pour la stack décrite**, pas dans l'abstrait. Lis `references/best-practices.md` pour les principes de découpage et les requêtes de recherche à lancer.
+1. **Explorer.** Lance `archi-explorateur-code` avec le chemin du projet (et le sous-dossier si c'est un monorepo ou si l'utilisateur vise un service précis).
+2. **Dessiner l'état actuel.** Toi-même, à partir de la spec brouillon de l'explorateur :
+   - écris `docs/architecture/spec.json` (relis les catégories et la granularité ; `decisions` = choix **constatés** avec leur preuve, `evolutions` vide) ;
+   - récupère les logos dans `docs/architecture/logos/` ;
+   - génère `architecture.excalidraw` + `ARCHITECTURE.md`, vérifie avec `check_layout.py`, ouvre avec `--open`.
+   - **N'ajoute rien qui n'est pas dans le code.** Les incertitudes de l'explorateur restent des incertitudes : signale-les.
+3. **Présenter et demander.** Montre l'état actuel en quelques lignes (briques, flux principaux, incertitudes), puis demande avec AskUserQuestion :
+   - s'il veut des **suggestions d'amélioration** (oui / non) ;
+   - si oui, ses **contraintes** dans la même série de questions : échelle visée (utilisateurs, trafic), taille de l'équipe, budget / hébergement, priorités (coût, fiabilité, temps réel, simplicité).
+   S'il répond non, livre (étape « Livrer ») et arrête-toi là.
+4. **Rechercher les bonnes pratiques.** Lance `archi-chercheur-bonnes-pratiques` avec : les chemins de `spec.json` et `ARCHITECTURE.md`, le résumé de l'explorateur, les contraintes de l'utilisateur.
+5. **Concevoir la cible.** Lance `archi-expert-senior` en **mode amélioration** avec : les chemins de l'état actuel, le rapport de bonnes pratiques complet, les contraintes, le dossier `docs/architecture/`. Il écrit `spec-cible.json` → `architecture-cible.excalidraw` + `ARCHITECTURE-cible.md`, sans toucher à l'état actuel.
+6. **Présenter la cible** : ce qui change (ajouts, retraits, modifications, avec leurs raisons), ce qui est reporté à plus tard, les questions ouvertes de l'expert. Ouvre `architecture-cible.excalidraw` (`code <fichier>`).
 
-Applique ensuite 3-5 recommandations concrètes : ajouter les composants classiques oubliés (cache, message queue, CDN, load balancer), corriger le regroupement, clarifier les flux synchrones vs asynchrones. Dis à l'utilisateur ce que tu as ajouté ou réorganisé, et pourquoi.
+## Mode B — Produit existant
 
-### Étape 3 — Traduire en Mermaid selon le vocabulaire Figma
+1. Lance `archi-chercheur-produit` avec le produit et l'angle demandé (« l'app mobile », « la vidéo »…).
+2. Dessine toi-même le résultat à partir de sa ou ses specs, dans un dossier dédié (ex. `~/<produit>-architecture/`, ou là où l'utilisateur le demande) : logos, génération, `check_layout.py`, `--open`. Une vue par spec si le chercheur en propose plusieurs.
+3. Livre en distinguant ce qui est **officiel**, **secondaire** et **non vérifié**, avec les sources en liens.
 
-**Avant tout appel à `generate_diagram`, charge le skill Figma correspondant** — c'est obligatoire, pas optionnel :
+## Mode C — Conception d'un nouveau système
 
-```
-mcp__<figma>__get_figma_skill  uri: "skill://figma/figma-generate-diagram/SKILL.md"
-puis                            uri: "skill://figma/figma-generate-diagram/references/architecture.md"
-```
+1. Si l'essentiel manque, demande-le **en une fois** : le but, la stack imposée, l'échelle visée, l'hébergement.
+2. Lance `archi-chercheur-bonnes-pratiques` avec la description et les contraintes.
+3. Lance `archi-expert-senior` en **mode conception** avec la description, les contraintes, le rapport de bonnes pratiques et le dossier cible (`docs/architecture/` du projet, ou un dossier dédié).
+4. Présente les choix structurants et les questions ouvertes ; ouvre le diagramme.
 
-Ce guide impose un vocabulaire fermé de sous-graphes (`client`, `gateway`, `service`, `datastore`, `external`, `async`) et des règles strictes (DAG, arêtes autorisées uniquement entre certaines catégories, `flowchart LR` obligatoire). Suis-le à la lettre — c'est lui qui fait autorité sur la syntaxe Mermaid et les contraintes de layout, pas ce fichier.
+## Livrer (tous les modes)
 
-Deux règles de granularité, apprises en testant ce skill sur un vrai projet, à appliquer **avant** d'écrire le Mermaid :
-
-- **Un nœud = une unité déployable indépendamment.** Une librairie ou un SDK intégré dans un service (ORM, middleware d'auth, middleware de sécurité) n'a **pas** son propre nœud — il reste invisible ou se mentionne dans le libellé d'une arête existante. Exemple : Better Auth monté dans une API Express fait partie du nœud `service` de l'API, pas un nœud séparé.
-- **Sauf si ce module fait de vrais appels réseau sortants vers un tiers.** Dans ce cas il devient un nœud `external`, relié au service par une arête pointillée. Exemple : le SDK Arcjet appelle le cloud Arcjet pour ses décisions de rate-limiting → nœud `external`, pas un module invisible.
-
-**Si une relation réelle ne correspond à aucune arête autorisée par le schéma** (ex: un fournisseur de certificats TLS relié à la gateway — aucune ligne `external → gateway` n'existe dans la table), **n'invente pas de contournement** : omets ce nœud et explique pourquoi à l'utilisateur plutôt que de forcer un diagramme structurellement faux.
-
-### Étape 4 — Générer le diagramme
-
-Appelle `generate_diagram` avec :
-- `mermaidSyntax` : le Mermaid construit à l'étape 3
-- `useArchitectureLayoutCode: "FIGMA_DIAGRAM_2026"`
-- `planKey` : récupéré via `whoami` si pas déjà connu (un seul plan → l'utiliser directement ; plusieurs → demander lequel)
-
-L'outil crée son propre fichier FigJam — n'appelle pas `create_new_file` avant.
-
-## Livrer à l'utilisateur
-
-La réponse de l'outil contient `claimFileUrl` (le lien à ouvrir) et `imageUrl` (une miniature). Donne les deux :
-
-- Le lien en markdown, clairement identifié comme à ouvrir dans **le navigateur de l'utilisateur** (il doit déjà être connecté à son compte Figma — ce n'est pas un lien que je peux visiter à sa place).
-- La miniature en image markdown pour un aperçu immédiat dans la conversation.
-
-Si des nœuds ont été omis (étape 3), rappelle-le explicitement à ce moment — c'est le meilleur endroit pour que l'utilisateur voie l'écart entre l'archi réelle et ce qui est diagrammé.
+- Les chemins du ou des `.excalidraw` et `ARCHITECTURE*.md`, et le diagramme **ouvert dans VS Code** (`--open` ou `code <fichier>`). Si l'extension `pomdtr.excalidraw-editor` n'est pas installée, **propose** de l'installer. Autre option : glisser le fichier sur excalidraw.com (rien n'est envoyé sur leurs serveurs).
+- Le résultat de `check_layout.py`.
+- Les logos utilisés et ceux introuvables ; les nœuds ou flux omis et pourquoi.
+- Si le projet a un `CLAUDE.md` ou un `AGENTS.md`, ajoute une ligne qui pointe vers `docs/architecture/ARCHITECTURE.md` (et la cible s'il y en a une). S'il n'en a pas, **propose** d'en créer un minimal ; n'en crée pas sans accord.
 
 ## Itérer
 
-Si l'utilisateur veut changer quelque chose sur un diagramme déjà généré :
-- **Contenu** (ajouter/retirer un nœud, changer un libellé) → régénère avec `fileKey` pointant vers le fichier existant, pour rester dans le même fichier plutôt que d'en créer un nouveau à chaque itération.
-- **Position, police, édition nœud par nœud** → `generate_diagram` ne sait pas faire ça ; oriente l'utilisateur vers l'édition manuelle dans FigJam.
-- Après 2 tentatives infructueuses sur le même diagramme, arrête de régénérer à l'aveugle — demande précisément ce qui cloche.
+- **Contenu** (nœud, libellé, flux, décision) → modifie la spec et relance le script. Préviens que ça écrase les retouches manuelles du `.excalidraw` ; si l'utilisateur en a fait, utilise `--doc-only` pour ne mettre à jour que le document, ou écris dans un nouveau fichier.
+- **Position fine, couleurs, annotations** → directement dans Excalidraw.
+- **Le code a changé** (mode A) → relance l'explorateur et régénère l'état actuel ; la cible reste un fichier séparé.
+- Après 2 tentatives infructueuses sur le même diagramme, arrête de régénérer à l'aveugle : demande précisément ce qui cloche.
 
 ## Ce que ce skill ne fait PAS
 
-- ❌ Il ne génère plus de fichiers Excalidraw ou PowerPoint — le projet a tranché pour Figma/FigJam uniquement après comparaison des trois.
-- ❌ Il n'appelle jamais `generate_diagram` sans avoir chargé `figma-generate-diagram` (et `architecture.md`) juste avant.
-- ❌ Il ne force pas une relation dans le Mermaid quand elle ne correspond à aucune arête autorisée — il omet et explique.
-- ❌ Il ne crée pas de nœud pour une librairie/un module interne qui n'est pas indépendamment déployable.
-- ❌ Il n'invente pas de composants qui ne correspondent pas à la stack juste pour « faire riche ».
-
-## Points d'attention
-
-- **Trop de nœuds dans une catégorie** : au-delà de ~7 composants, le diagramme devient illisible — monte d'un cran d'abstraction ou découpe en plusieurs diagrammes.
-- **Accès Figma** : vérifie que le compte a bien un accès (siège "Edit", pas seulement "View") avant de promettre un fichier éditable ; `whoami` renvoie le `seat` par plan.
-- **Réseau restreint** : la recherche web peut échouer selon l'environnement — continue quand même, ne bloque pas le diagramme dessus.
+- ❌ Il ne mélange jamais l'état actuel et la cible dans le même fichier : l'existant ne montre que ce qui est dans le code.
+- ❌ Il n'invente ni composant, ni techno, ni logo ; ce qui n'est pas vérifié est signalé.
+- ❌ Il ne crée pas de nœud pour une librairie interne non déployable.
+- ❌ Il n'écrit pas le JSON Excalidraw à la main : il passe par `scripts/build_excalidraw.py`.
+- ❌ Il ne lit jamais la valeur des secrets d'un projet (`.env`, clés) : seulement les noms de variables.
