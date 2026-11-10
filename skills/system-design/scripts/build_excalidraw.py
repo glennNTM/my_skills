@@ -1,53 +1,52 @@
 #!/usr/bin/env python3
-"""Construit un fichier .excalidraw (diagramme d'architecture) à partir d'une spec JSON.
+"""Build an .excalidraw architecture diagram (and ARCHITECTURE.md) from a JSON spec.
 
-Usage :
-    python build_excalidraw.py spec.json -o docs/architecture.excalidraw
+Usage:
+    python build_excalidraw.py spec.json -o docs/architecture/architecture.excalidraw [--lang en|fr] [--open]
 
-Spec attendue :
+Expected spec:
 {
-  "title": "Mon système",                        # optionnel
-  "subtitle": "Next.js · Node · PostgreSQL",     # optionnel
+  "title": "My system",                          # optional
+  "subtitle": "Next.js · Node · PostgreSQL",     # optional
   "nodes": [
-    {"id": "web", "label": "Next.js App", "sublabel": "SSR",  # sublabel optionnel
-     "category": "client", "logo": "logos/nextjs.svg"},      # logo optionnel (svg/png/jpg/webp), relatif à la spec
+    {"id": "web", "label": "Next.js App", "sublabel": "SSR",  # sublabel optional
+     "category": "client", "logo": "logos/nextdotjs.svg"},   # logo optional (svg/png/jpg/webp), relative to the spec
     ...
   ],
   "edges": [
     {"from": "web", "to": "api", "label": "REST"},
-    {"from": "api", "to": "queue", "label": "event", "dashed": true},   # dashed optionnel
-    {"from": "bot", "to": "telegram", "label": "polling", "both": true}, # both : flèche dans les deux sens
+    {"from": "api", "to": "queue", "label": "event", "dashed": true},   # dashed optional
+    {"from": "bot", "to": "telegram", "label": "polling", "both": true}, # both: arrowheads on both ends
     ...
   ],
-  "platform": {                                  # optionnel : cadre « hébergé sur » autour de plusieurs catégories
-    "label": "Serveur Dokploy · conteneurs Docker",
+  "platform": {                                  # optional: "hosted on" frame around several categories
+    "label": "Dokploy server · Docker containers",
     "logo": "logos/dokploy.svg",
     "categories": ["gateway", "service", "async", "datastore"]
   },
-  "columns": [["client"], ["gateway"], ["service"], ["async", "datastore"], ["external"]],  # optionnel
-  "decisions": ["Pas de Nginx : Traefik + WhiteNoise suffisent", ...],   # optionnel, repris dans ARCHITECTURE.md
-  "evolutions": ["PgBouncer au-delà de 50 tenants actifs", ...]         # optionnel, idem
+  "columns": [["client"], ["gateway"], ["service"], ["async", "datastore"], ["external"]],  # optional
+  "decisions": ["No Nginx: Traefik + WhiteNoise are enough", ...],  # optional, copied into ARCHITECTURE.md
+  "evolutions": ["PgBouncer beyond 50 active tenants", ...]         # optional, same
 }
 
-Le script écrit aussi ARCHITECTURE.md à côté de la spec (briques, flux, décisions), pour les devs
-et les agents IA, qui ne lisent pas bien le JSON Excalidraw. Seul le bloc généré est remplacé
-quand on relance : les notes ajoutées à la main sont conservées. --doc-only met à jour le document
-sans réécrire le .excalidraw.
+The script also writes ARCHITECTURE.md next to the spec (components, flows, decisions) for developers
+and AI agents, who do not read Excalidraw JSON well. Only the generated block is replaced on re-run:
+hand-written notes are kept. --doc-only updates the document without rewriting the .excalidraw.
+--lang (en|fr) sets the language of zone titles, legend and ARCHITECTURE.md headings.
 
-Catégories : client, gateway, api, service, async, datastore, external.
-`api` (optionnelle) sert aux couches entre l'edge et les services métier : BFF, gateway GraphQL, rendu SSR.
-Par défaut, `async` et `datastore` sont empilées dans la même colonne : les services
-parlent aux deux sans qu'une flèche ait à traverser une colonne.
-Les arêtes touchant `async` ou `external` sont pointillées automatiquement.
+Categories: client, gateway, api, service, async, datastore, external.
+`api` (optional) is for layers between the edge and business services: BFF, GraphQL gateway, SSR.
+By default `async` and `datastore` share one column, so services reach both without crossing a column.
+Edges touching `async` or `external` are dashed automatically.
 
-Mise en page :
-- libellé « Nom — détail » ou « Nom (détail) » → nom + sous-titre sur deux lignes (ou `sublabel`) ;
-- largeur des nœuds calculée sur le plus long libellé de la colonne ;
-- ordre des nœuds dans chaque zone choisi pour limiter les croisements (barycentre) ;
-- flèches orthogonales : chaque segment vertical a sa propre voie dans l'espace entre deux colonnes,
-  les points d'attache sont répartis le long du bord du nœud, et une flèche qui saute une colonne
-  passe par un couloir au-dessus ou en dessous des zones au lieu de les traverser ;
-- étiquettes de flèches sur fond blanc, placées là où elles ne se chevauchent pas.
+Layout:
+- label "Name — detail" or "Name (detail)" → name + subtitle on two lines (or use `sublabel`);
+- node width computed from the longest label of the column;
+- node order inside each zone chosen to minimise crossings (barycentre + search);
+- orthogonal arrows: each vertical segment gets its own lane in the gap between two columns,
+  attachment points are spread along the node edge, and an arrow that skips a column goes through
+  a corridor above or below the zones instead of crossing them;
+- edge labels on a white background, placed where they do not overlap.
 """
 from __future__ import annotations
 
@@ -64,16 +63,45 @@ from pathlib import Path
 
 CATEGORIES = ["client", "gateway", "api", "service", "async", "datastore", "external"]
 DEFAULT_COLUMNS = [["client"], ["gateway"], ["api"], ["service"], ["async", "datastore"], ["external"]]
-CATEGORY_TITLES = {
-    "client": "Clients",
-    "gateway": "Gateway / Edge",
-    "api": "API / Présentation",
-    "service": "Services",
-    "async": "Async / Messaging",
-    "datastore": "Données",
-    "external": "Services externes",
+I18N = {
+    "en": {
+        "client": "Clients", "gateway": "Gateway / Edge", "api": "API / Presentation",
+        "service": "Services", "async": "Async / Messaging", "datastore": "Data",
+        "external": "External services",
+        "legend_sync": "synchronous call", "legend_async": "asynchronous / external service",
+        "components": "Components", "category": "Category", "component": "Component", "detail": "Detail",
+        "hosting": "Hosting: **{label}** (contains: {cats}).", "flows": "Flows",
+        "asynchronous": "asynchronous", "external_service": "external service",
+        "dashed": "dashed: indirect or unverified",
+        "decisions": "Decisions", "evolutions": "Planned evolutions",
+        "diagram": "Diagram", "source": "source",
+        "notes_comment": "<!-- Free hand-written notes: kept when the script is re-run. -->",
+    },
+    "fr": {
+        "client": "Clients", "gateway": "Gateway / Edge", "api": "API / Présentation",
+        "service": "Services", "async": "Async / Messaging", "datastore": "Données",
+        "external": "Services externes",
+        "legend_sync": "appel synchrone", "legend_async": "asynchrone / service externe",
+        "components": "Briques", "category": "Catégorie", "component": "Brique", "detail": "Détail",
+        "hosting": "Hébergement : **{label}** (contient : {cats}).", "flows": "Flux",
+        "asynchronous": "asynchrone", "external_service": "service externe",
+        "dashed": "pointillé : indirect ou non vérifié",
+        "decisions": "Décisions", "evolutions": "Évolutions prévues",
+        "diagram": "Diagramme", "source": "source",
+        "notes_comment": "<!-- Notes libres écrites à la main : elles sont conservées quand le script est relancé. -->",
+    },
 }
-# (fond de zone, couleur de bordure des nœuds, fond des nœuds)
+LANG = "en"
+
+
+def tr(key: str) -> str:
+    """Translated string for the current --lang."""
+    return I18N[LANG][key]
+
+
+def cat_title(c: str) -> str:
+    return I18N[LANG][c]
+# (zone background, node border colour, node background)
 PALETTE = {
     "client": ("#e7f5ff", "#1971c2", "#ffffff"),
     "gateway": ("#f3f0ff", "#6741d9", "#ffffff"),
@@ -84,26 +112,26 @@ PALETTE = {
     "external": ("#f8f9fa", "#495057", "#ffffff"),
 }
 
-# Géométrie (px)
+# Geometry (px)
 NODE_MIN_W = 210
-NODE_H = 72          # nœud sans sous-titre
-NODE_H_SUB = 84      # nœud avec sous-titre
+NODE_H = 72          # node without subtitle
+NODE_H_SUB = 84      # node with subtitle
 LOGO = 40
 PAD_X = 16
 FS_LABEL = 18
 FS_SUB = 13
 FS_EDGE = 14
-CHAR_W = 0.6         # largeur moyenne d'un caractère / taille de police (estimation volontairement large)
-PORT_GAP = 30        # espacement entre deux points d'attache sur un même bord
-ROW_GAP = 44         # entre deux nœuds d'une zone
+CHAR_W = 0.6         # average char width / font size (deliberately generous)
+PORT_GAP = 30        # spacing between two attachment points on one edge
+ROW_GAP = 44         # between two nodes of a zone
 ZONE_PAD = 22
 ZONE_TITLE_H = 38
-ZONE_GAP = 34        # entre deux zones empilées dans une colonne
-GAP_MIN = 100        # espace minimal entre deux colonnes
-LANE_W = 28          # espacement entre deux voies verticales
+ZONE_GAP = 34        # between two zones stacked in a column
+GAP_MIN = 100        # minimum gap between two columns
+LANE_W = 28          # spacing between two vertical lanes
 LABEL_PAD = 14
-CORR_OFF = 30        # distance entre les zones et le premier couloir
-CORR_SP = 34         # espacement entre deux couloirs
+CORR_OFF = 30        # distance between zones and the first corridor
+CORR_SP = 34         # spacing between two corridors
 FRAME_PAD = 26
 FRAME_TITLE_H = 58
 ARROW_GAP = 4
@@ -174,7 +202,7 @@ def text_el(el_id: str, x: float, y: float, text: str, size: float = FS_LABEL, *
             "text": text,
             "originalText": text,
             "fontSize": size,
-            "fontFamily": 2,  # Helvetica (lisible pour un schéma d'archi)
+            "fontFamily": 2,  # Helvetica (readable for architecture diagrams)
             "textAlign": "left",
             "verticalAlign": "top",
             "containerId": None,
@@ -188,9 +216,9 @@ def text_el(el_id: str, x: float, y: float, text: str, size: float = FS_LABEL, *
 
 @functools.lru_cache(maxsize=None)
 def load_logo(path: Path) -> tuple[str, dict] | None:
-    """Retourne (fileId, entrée files) ou None si le fichier n'est pas une image valide."""
+    """Return (fileId, files entry), or None if the file is not a valid image."""
     if not path.is_file():
-        print(f"[warn] logo introuvable : {path}", file=sys.stderr)
+        print(f"[warn] logo not found: {path}", file=sys.stderr)
         return None
     data = path.read_bytes()
     ext = path.suffix.lower()
@@ -203,7 +231,7 @@ def load_logo(path: Path) -> tuple[str, dict] | None:
         or (mime == "image/webp" and data[8:12] == b"WEBP")
     )
     if not valid:
-        print(f"[warn] {path} n'est pas une image {ext} valide — ignoré", file=sys.stderr)
+        print(f"[warn] {path} is not a valid {ext} image — skipped", file=sys.stderr)
         return None
     file_id = hashlib.sha1(data).hexdigest()
     entry = {
@@ -228,7 +256,7 @@ def split_label(n: dict) -> tuple[str, str | None]:
 
 
 # ---------------------------------------------------------------------------
-# Ordre des voies verticales dans un espace entre colonnes
+# Order of vertical lanes inside a gap between columns
 # ---------------------------------------------------------------------------
 
 def _crossings(order: list[int], entries: list[dict]) -> int:
@@ -246,7 +274,7 @@ def _crossings(order: list[int], entries: list[dict]) -> int:
                     continue
                 if lo < y < hi and ((side == "L" and xf < xe) or (side == "R" and xf > xe)):
                     n += 1
-                # deux horizontales à la même hauteur qui se recouvrent : on croirait une seule flèche
+                # two overlapping horizontals at the same height would read as a single arrow
                 for yf, sf in f["p"]:
                     if sf and abs(y - yf) < 1 and (
                         sf == side or (side == "L" and sf == "R" and xf < xe)
@@ -262,7 +290,7 @@ def order_lanes(entries: list[dict]) -> list[int]:
         return keys
     if len(keys) <= 7:
         return list(min(itertools.permutations(keys), key=lambda o: _crossings(list(o), entries)))
-    # Au-delà : recherche locale par échanges à partir de quelques ordres de départ
+    # Beyond that: local search by swaps from a few starting orders
     best, best_c = None, None
     starts = [
         [e["k"] for e in sorted(entries, key=lambda e: e["p"][0][0])],
@@ -292,7 +320,7 @@ def order_lanes(entries: list[dict]) -> list[int]:
 # ---------------------------------------------------------------------------
 
 def _score(R: list[dict]) -> tuple[int, int, float]:
-    """(croisements entre flèches, flèches qui remontent dans une colonne, longueur totale) — plus petit = plus lisible."""
+    """(arrow crossings, arrows going back up a column, total length) — smaller = more readable."""
     upward = sum(1 for r in R if r["kind"] == "vert" and r["sa"] == "T")
     segs = []
     for r in R:
@@ -301,7 +329,7 @@ def _score(R: list[dict]) -> tuple[int, int, float]:
     crossings = 0
     for i, ax1, ay1, ax2, ay2 in segs:
         if abs(ay1 - ay2) > 0.5:
-            continue  # on part des segments horizontaux
+            continue  # start from horizontal segments
         hx0, hx1, hy = min(ax1, ax2), max(ax1, ax2), ay1
         for j, bx1, by1, bx2, by2 in segs:
             if j == i or abs(bx1 - bx2) > 0.5:
@@ -309,7 +337,7 @@ def _score(R: list[dict]) -> tuple[int, int, float]:
             vy0, vy1, vx = min(by1, by2), max(by1, by2), bx1
             if hx0 + 1 < vx < hx1 - 1 and vy0 + 1 < hy < vy1 - 1:
                 crossings += 1
-        # segments horizontaux superposés (même hauteur, plages qui se recouvrent)
+        # overlapping horizontal segments (same height, overlapping ranges)
         for j, bx1, by1, bx2, by2 in segs:
             if j == i or abs(by1 - by2) > 0.5 or abs(by1 - hy) > 1:
                 continue
@@ -320,8 +348,8 @@ def _score(R: list[dict]) -> tuple[int, int, float]:
 
 
 def build(spec: dict, spec_dir: Path) -> dict:
-    """Essaie les ordres de nœuds possibles dans chaque zone et garde le moins de croisements."""
-    doc, R, zones = _build(spec, spec_dir, None)  # ordre du barycentre
+    """Try the possible node orders in each zone and keep the one with the fewest crossings."""
+    doc, R, zones = _build(spec, spec_dir, None)  # barycentre order
     best = (_score(R), doc)
     cats = [c for c in zones if len(zones[c]) > 1]
     n_combos = 1
@@ -337,7 +365,7 @@ def build(spec: dict, spec_dir: Path) -> dict:
             if s < best[0]:
                 best = (s, d)
     elif n_combos > 720:
-        # Trop de combinaisons : on optimise une zone à la fois, les autres restant fixes
+        # Too many combinations: optimise one zone at a time, the others fixed
         order = {c: list(v) for c, v in zones.items()}
         for _ in range(2):
             for c in cats:
@@ -359,22 +387,22 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
     byid: dict[str, dict] = {}
     for n in nodes:
         if n["category"] not in CATEGORIES:
-            sys.exit(f"Catégorie inconnue '{n['category']}' pour le nœud '{n['id']}'. Attendu : {CATEGORIES}")
+            sys.exit(f"Unknown category '{n['category']}' for node '{n['id']}'. Expected: {CATEGORIES}")
         if n["id"] in byid:
             sys.exit(f"Identifiant de nœud en double : '{n['id']}'")
         byid[n["id"]] = n
     for e in edges:
         for k in ("from", "to"):
             if e[k] not in byid:
-                sys.exit(f"Arête {e} : nœud '{e[k]}' inexistant")
+                sys.exit(f"Edge {e}: node '{e[k]}' does not exist")
         if e["from"] == e["to"]:
-            sys.exit(f"Arête {e} : une flèche d'un nœud vers lui-même n'est pas supportée")
+            sys.exit(f"Edge {e}: self-loops are not supported")
 
     columns_spec = spec.get("columns", DEFAULT_COLUMNS)
     placed = {c for g in columns_spec for c in g}
     for n in nodes:
         if n["category"] not in placed:
-            sys.exit(f"La catégorie '{n['category']}' n'apparaît dans aucune colonne de 'columns'")
+            sys.exit(f"Category '{n['category']}' is not in any column of 'columns'")
     col_cats = [[c for c in g if any(n["category"] == c for n in nodes)] for g in columns_spec]
     col_cats = [g for g in col_cats if g]
     ncols = len(col_cats)
@@ -386,7 +414,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
     def col_nodes(ci: int) -> list[str]:
         return [nid for c in col_cats[ci] for nid in zones[c]]
 
-    # 1. Ordre des nœuds dans chaque zone (heuristique du barycentre) -------------
+    # 1. Node order inside each zone (barycentre heuristic) ----------------------
     nbrs: dict[str, list[str]] = {nid: [] for nid in byid}
     for e in edges:
         nbrs[e["from"]].append(e["to"])
@@ -405,7 +433,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
                     return sum(other) / len(other) if other else pos[nid]
                 zones[c].sort(key=key)
 
-    # 2. Type de chaque arête et bords utilisés -----------------------------------
+    # 2. Type of each edge and node sides used -----------------------------------
     R: list[dict] = []
     for i, e in enumerate(edges):
         a, b = e["from"], e["to"]
@@ -436,7 +464,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
         sides.setdefault((r["a"], r["sa"]), []).append((r["i"], "s"))
         sides.setdefault((r["b"], r["sb"]), []).append((r["i"], "t"))
 
-    # 3. Tailles des nœuds --------------------------------------------------------
+    # 3. Node sizes ---------------------------------------------------------------
     labels = {nid: split_label(n) for nid, n in byid.items()}
     logos = {nid: (load_logo((spec_dir / n["logo"]).resolve()) if n.get("logo") else None) for nid, n in byid.items()}
 
@@ -457,7 +485,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
     W = [max(NODE_MIN_W, max(content_w(nid) for nid in col_nodes(ci))) for ci in range(ncols)]
     ZW = [w + 2 * ZONE_PAD for w in W]
 
-    # 4. Positions verticales (relatives au haut des zones) ----------------------
+    # 4. Vertical positions (relative to the top of zones) -----------------------
     zone_rel: dict[str, tuple[float, float]] = {}
     node_rel: dict[str, float] = {}
     col_h: list[float] = []
@@ -512,8 +540,8 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
         return sum(1 for r in R if r["kind"] in ("fwd", "bwd") and abs(port_y(r, "s", P) - port_y(r, "t", P)) < 1)
 
     def facing_collisions(P: dict) -> int:
-        """Points d'attache de flèches différentes, face à face à la même hauteur dans un même espace :
-        leurs horizontales se prolongent l'une l'autre et on croirait une seule flèche."""
+        """Attachment points of different arrows facing each other at the same height in one gap:
+        their horizontals would continue each other and read as a single arrow."""
         by_gap: dict[int, list[tuple[int, float, str]]] = {}
         for r in R:
             ya, yb = port_y(r, "s", P), port_y(r, "t", P)
@@ -532,7 +560,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
                         n += 1
         return n
 
-    # Décale verticalement les colonnes moins hautes pour rendre un maximum de flèches droites
+    # Shift shorter columns vertically to make as many arrows straight as possible
     for _ in range(3):
         for ci in range(ncols):
             slack = H - col_h[ci]
@@ -565,7 +593,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
         if r["kind"] in ("fwd", "bwd") and abs(port_y(r, "s", P) - port_y(r, "t", P)) < 1:
             r["straight"] = True
 
-    # 5. Couloirs (flèches qui sautent au moins une colonne) ------------------------
+    # 5. Corridors (arrows that skip at least one column) --------------------------
     corr_top = sorted([r for r in R if r["kind"] == "corr" and r["corr"] == "top"],
                       key=lambda r: (abs(col[r["a"]] - col[r["b"]]), r["i"]))
     corr_bot = sorted([r for r in R if r["kind"] == "corr" and r["corr"] == "bot"],
@@ -575,8 +603,8 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
     for j, r in enumerate(corr_bot):
         r["cy_rel"] = H + CORR_OFF + j * CORR_SP
 
-    # 6. Voies verticales dans chaque espace entre colonnes ----------------------
-    # gap gi = espace à droite de la colonne gi (le dernier sert aux boucles de la dernière colonne)
+    # 6. Vertical lanes in each gap between columns --------------------------------
+    # gap gi = space right of column gi (the last one hosts loops of the last column)
     gaps: dict[int, list[dict]] = {gi: [] for gi in range(ncols)}
 
     def add_lane(gi: int, key: tuple[int, int], p1: tuple, p2: tuple) -> None:
@@ -606,7 +634,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
         for idx, key in enumerate(order_lanes(entries)):
             lane_rank[key] = (gi, idx)
 
-    # Cadre « plateforme »
+    # "platform" frame
     platform = spec.get("platform")
     frame_cols: set[int] = set()
     if platform:
@@ -638,7 +666,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
             total = max(GAP_MIN, total)
         gap_geo[gi] = {"left_res": left_res, "right_res": right_res, "label_area": label_area, "n": n, "w": total}
 
-    # 7. Positions absolues --------------------------------------------------------
+    # 7. Absolute positions -------------------------------------------------------
     X = [0.0]
     for ci in range(ncols - 1):
         X.append(X[ci] + ZW[ci] + gap_geo[ci]["w"])
@@ -707,7 +735,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
             pts = [pa, (l1, pa[1]), (l1, cy), (l2, cy), (l2, pb[1]), pb]
         r["pts"] = pts
 
-    # Position des étiquettes de flèches
+    # Edge label positions
     verticals = []  # (edge index, x, ylo, yhi)
     for r in R:
         for (x1, y1), (x2, y2) in zip(r["pts"], r["pts"][1:]):
@@ -724,7 +752,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
         elif k == "vert":
             mid = len(pts) // 2
             (x1, y1), (x2, y2) = pts[mid - 1], pts[mid]
-            # à côté du trait (l'espace entre deux nœuds est trop court pour poser l'étiquette dessus)
+            # next to the line (the gap between two nodes is too short to put the label on it)
             r["lbl"] = ((x1 + x2) / 2 + label_box_w(r["label"]) / 2 + 4, (y1 + y2) / 2)
         else:
             (x1, cy), (x2, _) = pts[2], pts[3]
@@ -738,7 +766,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
                     break
             r["lbl"] = (chosen if chosen is not None else (x1 + x2) / 2, cy)
 
-    # 8. Éléments Excalidraw --------------------------------------------------------
+    # 8. Excalidraw elements -------------------------------------------------------
     elements: list[dict] = []
     files: dict[str, dict] = {}
 
@@ -779,7 +807,7 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
             elements.append(base(f"zone-{c}", "rectangle", zx, zy, ZW[ci], zh,
                                  backgroundColor=zbg, strokeColor=stroke, strokeStyle="dashed",
                                  strokeWidth=1, roundness={"type": 3}))
-            elements.append(text_el(f"zone-{c}-title", zx + ZONE_PAD, zy + 12, CATEGORY_TITLES[c],
+            elements.append(text_el(f"zone-{c}-title", zx + ZONE_PAD, zy + 12, cat_title(c),
                                     size=18, strokeColor=stroke))
 
     rects: dict[str, dict] = {}
@@ -842,11 +870,11 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
             t["x"], t["y"] = cx - t["width"] / 2, cy - t["height"] / 2
             box["boundElements"].append({"id": t["id"], "type": "text"})
             label_elements += [box, t]
-    elements += label_elements  # au-dessus des flèches : le fond blanc masque le trait
+    elements += label_elements  # above arrows: the white background hides the line
 
-    # Légende
+    # Legend
     ly = max_y + 36
-    for k, (dashed, txt) in enumerate([(False, "appel synchrone"), (True, "asynchrone / service externe")]):
+    for k, (dashed, txt) in enumerate([(False, tr("legend_sync")), (True, tr("legend_async"))]):
         lx = k * 260
         leg = base(f"legend-{k}", "arrow", lx, ly, 50, 0, strokeColor=EDGE_COLOR,
                    strokeStyle="dashed" if dashed else "solid")
@@ -867,11 +895,13 @@ def _build(spec: dict, spec_dir: Path, order: dict | None) -> tuple[dict, list[d
 
 
 # ---------------------------------------------------------------------------
-# Documentation lisible (devs et agents IA) : ARCHITECTURE.md
+# Readable documentation (developers and AI agents): ARCHITECTURE.md
 # ---------------------------------------------------------------------------
 
-GEN_BEGIN = "<!-- BEGIN GENERATED par build_excalidraw.py depuis la spec : ne pas modifier ici, modifier la spec et relancer -->"
+GEN_BEGIN = "<!-- BEGIN GENERATED by build_excalidraw.py from the spec: do not edit here, edit the spec and re-run -->"
 GEN_END = "<!-- END GENERATED -->"
+# Marker written by earlier (French) versions, still recognised so old documents keep updating.
+GEN_BEGIN_LEGACY = "<!-- BEGIN GENERATED par build_excalidraw.py depuis la spec : ne pas modifier ici, modifier la spec et relancer -->"
 
 
 def _rel(target: Path, base_dir: Path) -> str:
@@ -885,60 +915,61 @@ def render_doc_block(spec: dict, doc_dir: Path, diagram: Path, spec_path: Path) 
     out = [GEN_BEGIN, ""]
     if spec.get("subtitle"):
         out += [f"> {spec['subtitle']}", ""]
-    out += [f"Diagramme : [{diagram.name}]({_rel(diagram, doc_dir)}) · source : [{spec_path.name}]({_rel(spec_path, doc_dir)})", ""]
+    out += [f"{tr('diagram')}: [{diagram.name}]({_rel(diagram, doc_dir)}) · {tr('source')}: "
+            f"[{spec_path.name}]({_rel(spec_path, doc_dir)})", ""]
 
-    out += ["## Briques", "", "| Catégorie | Brique | Détail |", "|---|---|---|"]
+    out += [f"## {tr('components')}", "", f"| {tr('category')} | {tr('component')} | {tr('detail')} |", "|---|---|---|"]
     for c in CATEGORIES:
         for n in spec["nodes"]:
             if n["category"] == c:
                 lab, sub = split_label(n)
-                out.append(f"| {CATEGORY_TITLES[c]} | **{lab}** | {sub or '—'} |")
+                out.append(f"| {cat_title(c)} | **{lab}** | {sub or '—'} |")
     out.append("")
     platform = spec.get("platform")
     if platform:
-        cats = ", ".join(CATEGORY_TITLES[c] for c in platform.get("categories", []) if c in CATEGORY_TITLES)
-        out += [f"Hébergement : **{platform.get('label', '')}** (contient : {cats}).", ""]
+        cats = ", ".join(cat_title(c) for c in platform.get("categories", []) if c in CATEGORIES)
+        out += [tr("hosting").format(label=platform.get("label", ""), cats=cats), ""]
 
-    out += ["## Flux", ""]
+    out += [f"## {tr('flows')}", ""]
     for e in spec.get("edges", []):
         a, b = byid[e["from"]], byid[e["to"]]
         arrow = "↔" if e.get("both") else "→"
         cats = {cat[e["from"]], cat[e["to"]]}
         tags = [e["label"]] if e.get("label") else []
         if "async" in cats:
-            tags.append("asynchrone")
+            tags.append(tr("asynchronous"))
         if "external" in cats:
-            tags.append("service externe")
+            tags.append(tr("external_service"))
         if e.get("dashed") and not cats & {"async", "external"}:
-            tags.append("pointillé : indirect ou non vérifié")
-        out.append(f"- **{split_label(a)[0]}** {arrow} **{split_label(b)[0]}**" + (f" : {' · '.join(tags)}" if tags else ""))
+            tags.append(tr("dashed"))
+        out.append(f"- **{split_label(a)[0]}** {arrow} **{split_label(b)[0]}**" + (f": {' · '.join(tags)}" if tags else ""))
     out.append("")
 
-    for key, title in (("decisions", "Décisions"), ("evolutions", "Évolutions prévues")):
+    for key in ("decisions", "evolutions"):
         items = spec.get(key)
         if items:
-            out += [f"## {title}", ""] + [f"- {x}" for x in items] + [""]
+            out += [f"## {tr(key)}", ""] + [f"- {x}" for x in items] + [""]
     out.append(GEN_END)
     return "\n".join(out)
 
 
 def write_doc(doc_path: Path, spec: dict, diagram: Path, spec_path: Path) -> None:
-    """Crée ou met à jour le document. Seul le bloc généré est remplacé : le reste (notes à la main) est conservé."""
+    """Create or update the document. Only the generated block is replaced; hand-written notes are kept."""
     block = render_doc_block(spec, doc_path.parent, diagram, spec_path)
     if doc_path.is_file():
         text = doc_path.read_text(encoding="utf-8")
-        if GEN_BEGIN in text and GEN_END in text:
-            head, rest = text.split(GEN_BEGIN, 1)
+        begin = GEN_BEGIN if GEN_BEGIN in text else GEN_BEGIN_LEGACY
+        if begin in text and GEN_END in text:
+            head, rest = text.split(begin, 1)
             _, tail = rest.split(GEN_END, 1)
             text = head + block + tail
         else:
             text = text.rstrip() + "\n\n" + block + "\n"
     else:
         title = spec.get("title") or "Architecture"
-        text = (f"# {title}\n\n{block}\n\n## Notes\n\n"
-                "<!-- Notes libres écrites à la main : elles sont conservées quand le script est relancé. -->\n")
+        text = f"# {title}\n\n{block}\n\n## Notes\n\n{tr('notes_comment')}\n"
     doc_path.write_text(text, encoding="utf-8")
-    print(f"Doc : {doc_path}")
+    print(f"Doc: {doc_path}")
 
 
 def default_doc_path(spec_path: Path) -> Path:
@@ -949,24 +980,28 @@ def default_doc_path(spec_path: Path) -> Path:
 
 
 def main() -> None:
+    global LANG
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("spec", type=Path)
     ap.add_argument("-o", "--output", type=Path, default=Path("architecture.excalidraw"))
+    ap.add_argument("--lang", choices=sorted(I18N), default="en",
+                    help="language of zone titles, legend and ARCHITECTURE.md headings (default: en)")
     ap.add_argument("--open", action="store_true",
-                    help="ouvre le fichier généré dans VS Code (extension Excalidraw) ou, à défaut, l'application par défaut")
+                    help="open the result in VS Code (Excalidraw extension), or else the default application")
     ap.add_argument("--doc", type=Path, default=None,
-                    help="chemin du document Markdown (défaut : ARCHITECTURE.md à côté de la spec)")
-    ap.add_argument("--no-doc", action="store_true", help="ne pas écrire le document Markdown")
+                    help="path of the Markdown document (default: ARCHITECTURE.md next to the spec)")
+    ap.add_argument("--no-doc", action="store_true", help="do not write the Markdown document")
     ap.add_argument("--doc-only", action="store_true",
-                    help="met à jour seulement le document, sans réécrire le .excalidraw (garde les retouches manuelles)")
+                    help="only update the document, do not rewrite the .excalidraw (keeps manual edits)")
     args = ap.parse_args()
+    LANG = args.lang
     spec = json.loads(args.spec.read_text(encoding="utf-8"))
     if not args.doc_only:
         doc = build(spec, args.spec.parent)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
         n_logos = len(doc["files"])
-        print(f"OK : {args.output} ({len(spec['nodes'])} nœuds, {len(spec.get('edges', []))} arêtes, {n_logos} logos)")
+        print(f"OK: {args.output} ({len(spec['nodes'])} nodes, {len(spec.get('edges', []))} edges, {n_logos} logos)")
     if not args.no_doc:
         write_doc(args.doc or default_doc_path(args.spec), spec, args.output, args.spec)
     if args.open:
@@ -974,7 +1009,7 @@ def main() -> None:
 
 
 def open_file(path: Path) -> None:
-    """Ouvre le diagramme dans VS Code si possible (extension pomdtr.excalidraw-editor), sinon avec l'app par défaut."""
+    """Open the diagram in VS Code if possible (pomdtr.excalidraw-editor extension), else the default app."""
     import os
     import shutil
     import subprocess
@@ -982,14 +1017,14 @@ def open_file(path: Path) -> None:
     if code:
         subprocess.Popen(f'"{code}" "{path}"', shell=True,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"Ouvert dans VS Code : {path}")
+        print(f"Opened in VS Code: {path}")
     elif hasattr(os, "startfile"):
         os.startfile(path)  # type: ignore[attr-defined]
-        print(f"Ouvert avec l'application par défaut : {path}")
+        print(f"Opened with the default application: {path}")
     else:
         opener = "open" if sys.platform == "darwin" else "xdg-open"
         subprocess.Popen([opener, str(path)])
-        print(f"Ouvert avec {opener} : {path}")
+        print(f"Opened with {opener}: {path}")
 
 
 if __name__ == "__main__":

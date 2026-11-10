@@ -28,28 +28,30 @@ Planifie l'exécution d'une tâche de développement (feature, refactoring, migr
 
 Démarre le développement d'une feature à partir d'un plan validé par `planifier` : création de branche, implémentation étape par étape, lint/typecheck/tests, puis pause pour validation manuelle. Conçu pour s'enchaîner avec `planifier`.
 
-### [`architecture-systeme`](skills/architecture-systeme/SKILL.md)
+### [`system-design`](skills/system-design/SKILL.md)
 
-Un **architecte logiciel senior** : il cadre les exigences par des questions, challenge la demande, raisonne en compromis, puis définit l'architecture d'un projet existant, d'un produit connu (Twitch, Discord…) ou d'un nouveau système. Livrables dans `docs/architecture/` :
+A **senior software architect**: it frames requirements with questions, challenges the request, reasons in trade-offs, then designs the architecture of an existing codebase, a well-known product (Twitch, Discord…) or a new system. Covers system design, scalability, latency, caching, load balancing, databases, replication, sharding, consistency, message queues, rate limiting, CDNs, search, storage, microservices and observability.
 
-- **diagrammes Excalidraw** éditables avec les logos officiels, et `ARCHITECTURE.md` (état actuel, cible, vue de déploiement) ;
-- **`DONNEES.md`** : modèle de données, SGBD et hébergement justifiés à partir des patterns d'accès, backend applicatif par défaut, BaaS (Supabase, Firebase, Convex, Appwrite) seulement si le projet s'y prête ;
-- **`API.md`** : style par frontière (REST, GraphQL, gRPC, WebSocket/SSE, webhooks), ressources, endpoints, conventions (auth, erreurs, pagination, idempotence, versioning) et index requis ;
-- **`DEPLOIEMENT.md`** : estimation de charge, load balancing, scaling vertical ou horizontal, autoscaling, cache, réplicas, haute disponibilité, mise en production.
+Deliverables in `docs/architecture/`, written in the user's language:
 
-Il orchestre 7 agents embarqués ([`agents/`](skills/architecture-systeme/agents/)). Chacun traite **un seul problème**, avec uniquement les outils nécessaires et des règles non négociables :
+- **always** — an editable **Excalidraw diagram** with official logos and `ARCHITECTURE.md` (current state, target, infrastructure view);
+- **in scope** — `DATA.md` (stores, replication, sharding, consistency, caching, search, storage), `API.md` (style per boundary, endpoints, conventions, rate limiting, required indexes) and `INFRASTRUCTURE.md` (load balancing, CDN, scaling, latency, reliability, deployment, observability);
+- **on request** — a professional **design-doc PDF** (project proposal or implementation phase), without logos.
 
-| Agent | Problème | Outils |
+It orchestrates 8 embedded agents ([`agents/`](skills/system-design/agents/)), each solving **one problem** with only the tools it needs, under shared rules ([`rules.md`](skills/system-design/rules.md)):
+
+| Agent | Problem | Tools |
 |---|---|---|
-| `codebase-explorer` | Qu'est-ce qui existe dans ce code ? (lecture seule, preuves `fichier:ligne`) | Read, Grep, Glob |
-| `product-researcher` | Comment ce produit connu est-il construit ? | WebSearch, WebFetch |
-| `best-practices-researcher` | Que font les équipes sérieuses à cette échelle ? | WebSearch, WebFetch |
-| `data-architect` | Quel modèle de données, quel SGBD ? (BaaS seulement si le projet s'y prête) | Read, Write |
-| `system-architect` | Quelles briques et quels flux ? | Read, Write |
-| `api-designer` | Quel contrat d'API ? | Read, Write |
-| `deployment-architect` | Comment ça tourne en prod et tient la charge ? | Read, Write |
+| `codebase-explorer` | What actually exists in the code? (read-only, `path:line` evidence) | Read, Grep, Glob |
+| `product-researcher` | How is this known product built? | WebSearch, WebFetch |
+| `best-practices-researcher` | What do serious teams do at this scale? | WebSearch, WebFetch |
+| `data-architect` | Where and how does the data live? | Read, Write |
+| `system-architect` | Which components, boundaries and flows? | Read, Write |
+| `api-designer` | What is the API contract? | Read, Write |
+| `infrastructure-architect` | How does it run and hold the load in production? | Read, Write |
+| `technical-writer` | Turn the design into a design doc (PDF on request) | Read, Write |
 
-Le script `build_excalidraw.py` met en page automatiquement (colonnes par catégorie, flèches orthogonales, ordre des nœuds qui minimise les croisements). `check_layout.py` vérifie la lisibilité sans navigateur. Avec `--open`, le diagramme s'ouvre dans VS Code (extension `pomdtr.excalidraw-editor`).
+Scripts (standard library only): `build_excalidraw.py` (automatic layout, `--lang en|fr`), `check_layout.py` (readability check without a browser), `excalidraw_to_svg.py` (static SVG, `--no-logos`), `build_pdf.py` (Markdown → PDF through headless Chrome/Edge). With `--open`, the diagram opens in VS Code (extension `pomdtr.excalidraw-editor`).
 
 ### [`landing-page-builder`](skills/landing-page-builder/SKILL.md)
 
