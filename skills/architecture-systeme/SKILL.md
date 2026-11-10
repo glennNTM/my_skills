@@ -1,6 +1,6 @@
 ---
 name: architecture-systeme
-description: Architecte logiciel senior. Définit l'architecture système d'un projet existant, d'un produit connu ou d'un nouveau système — briques, flux, choix de la base de données et du SGBD (et d'un BaaS comme Supabase, Firebase, Convex ou Appwrite quand c'est pertinent), modélisation de l'API (REST, GraphQL, gRPC, WebSocket, pagination, index, versioning) et déploiement/scalabilité (load balancer, scaling vertical/horizontal, réplicas, cache, haute disponibilité) — et la livre en diagrammes Excalidraw avec logos officiels, ARCHITECTURE.md, DONNEES.md, API.md et DEPLOIEMENT.md. Orchestre des agents embarqués dans le skill, chacun dédié à un seul problème. Déclenche ce skill dès que l'utilisateur dit "/architecture-systeme", "/diagramme", "architecture système", "system design de…", "fais un diagramme d'architecture", "dessine l'archi de ce projet", "architecture de <produit>", "comment modéliser / designer mon API", "REST ou GraphQL", "quelle base de données", "PostgreSQL ou MongoDB", "Supabase ou Firebase", "BaaS ou backend", "comment scaler / déployer mon système", "load balancer", "scalabilité horizontale", ou décrit une stack et veut la structurer — même s'il ne mentionne pas Excalidraw.
+description: Architecte logiciel senior. Définit l'architecture système d'un projet existant, d'un produit connu ou d'un nouveau système — briques, flux, choix de la base de données et du SGBD (backend applicatif par défaut ; BaaS comme Supabase, Firebase, Convex ou Appwrite seulement si le projet s'y prête), modélisation de l'API (REST, GraphQL, gRPC, WebSocket, pagination, index, versioning) et déploiement/scalabilité (load balancer, scaling vertical/horizontal, réplicas, cache, haute disponibilité) — et la livre en diagrammes Excalidraw avec logos officiels, ARCHITECTURE.md, DONNEES.md, API.md et DEPLOIEMENT.md. Orchestre des agents embarqués dans le skill, chacun dédié à un seul problème. Déclenche ce skill dès que l'utilisateur dit "/architecture-systeme", "/diagramme", "architecture système", "system design de…", "fais un diagramme d'architecture", "dessine l'archi de ce projet", "architecture de <produit>", "comment modéliser / designer mon API", "REST ou GraphQL", "quelle base de données", "PostgreSQL ou MongoDB", "Supabase ou Firebase", "BaaS ou backend", "comment scaler / déployer mon système", "load balancer", "scalabilité horizontale", ou décrit une stack et veut la structurer — même s'il ne mentionne pas Excalidraw.
 ---
 
 # Architecture système — orchestrateur
@@ -76,7 +76,7 @@ Références : `references/spec-et-generation.md` (spec, logos, script, vérific
 1. Cadrage et périmètre.
 2. **best-practices-researcher** → **data-architect** → `DONNEES.md` → **system-architect** (conception) → `spec.json`.
 3. En parallèle selon le périmètre : **api-designer** → `API.md` (+ `openapi.yaml` si demandé) ; **deployment-architect** → `DEPLOIEMENT.md` + `spec-deploiement.json`.
-4. Génère et vérifie les diagrammes, puis présente l'estimation de charge, les choix structurants (dont le choix de base et le verdict BaaS) et les questions ouvertes.
+4. Génère et vérifie les diagrammes, puis présente l'estimation de charge, les choix structurants (dont le choix de base, et le BaaS s'il est retenu) et les questions ouvertes.
 
 ## Livrer
 

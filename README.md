@@ -33,7 +33,7 @@ Démarre le développement d'une feature à partir d'un plan validé par `planif
 Un **architecte logiciel senior** : il cadre les exigences par des questions, challenge la demande, raisonne en compromis, puis définit l'architecture d'un projet existant, d'un produit connu (Twitch, Discord…) ou d'un nouveau système. Livrables dans `docs/architecture/` :
 
 - **diagrammes Excalidraw** éditables avec les logos officiels, et `ARCHITECTURE.md` (état actuel, cible, vue de déploiement) ;
-- **`DONNEES.md`** : modèle de données, SGBD et hébergement justifiés à partir des patterns d'accès, avec un verdict BaaS (Supabase, Firebase, Convex, Appwrite) ;
+- **`DONNEES.md`** : modèle de données, SGBD et hébergement justifiés à partir des patterns d'accès, backend applicatif par défaut, BaaS (Supabase, Firebase, Convex, Appwrite) seulement si le projet s'y prête ;
 - **`API.md`** : style par frontière (REST, GraphQL, gRPC, WebSocket/SSE, webhooks), ressources, endpoints, conventions (auth, erreurs, pagination, idempotence, versioning) et index requis ;
 - **`DEPLOIEMENT.md`** : estimation de charge, load balancing, scaling vertical ou horizontal, autoscaling, cache, réplicas, haute disponibilité, mise en production.
 
@@ -44,7 +44,7 @@ Il orchestre 7 agents embarqués ([`agents/`](skills/architecture-systeme/agents
 | `codebase-explorer` | Qu'est-ce qui existe dans ce code ? (lecture seule, preuves `fichier:ligne`) | Read, Grep, Glob |
 | `product-researcher` | Comment ce produit connu est-il construit ? | WebSearch, WebFetch |
 | `best-practices-researcher` | Que font les équipes sérieuses à cette échelle ? | WebSearch, WebFetch |
-| `data-architect` | Quel modèle de données, quel SGBD, BaaS ou non ? | Read, Write |
+| `data-architect` | Quel modèle de données, quel SGBD ? (BaaS seulement si le projet s'y prête) | Read, Write |
 | `system-architect` | Quelles briques et quels flux ? | Read, Write |
 | `api-designer` | Quel contrat d'API ? | Read, Write |
 | `deployment-architect` | Comment ça tourne en prod et tient la charge ? | Read, Write |

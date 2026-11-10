@@ -23,7 +23,7 @@
 
 ## 2. BaaS : oui, non ou hybride
 
-Un BaaS fournit base + auth + stockage + temps réel + fonctions, et remplace tout ou partie du backend.
+**Le défaut reste un backend applicatif** (API maison + sa base). Un BaaS fournit base + auth + stockage + temps réel + fonctions, et remplace tout ou partie de ce backend. On ne le retient que si le projet s'y prête : au moins un critère « plutôt oui » et aucun « plutôt non ».
 
 **Plutôt oui** : MVP ou time-to-market prioritaire ; petite équipe sans profil backend ou ops ; besoins essentiellement CRUD + auth + fichiers + temps réel ; app mobile qui a besoin de synchronisation ou de mode hors ligne.
 
