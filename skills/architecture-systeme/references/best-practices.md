@@ -18,17 +18,6 @@ Deux objectifs : un **découpage juste** et un **rendu lisible**. Applique ces p
 - **Distinguer synchrone et asynchrone** : arêtes pleines pour le flux normal, pointillées pour tout ce qui touche `async` ou `external` (le script le fait automatiquement ; `"dashed": true` pour forcer).
 - **Couleurs par catégorie** (assignées par le script, retouchables ensuite dans Excalidraw) : client bleu, gateway violet, service vert, async orange, datastore jaune, external gris.
 
-## Comment rechercher sur le web (étape 2 du workflow)
-
-Le but est de **confronter le découpage à des architectures de référence réelles** pour la stack décrite, pas de recopier un template générique. Lance 2-4 recherches `WebSearch` ciblées, par exemple :
-
-- `"<stack principale> reference architecture"` (ex: `Next.js Postgres reference architecture`)
-- `"<techno> architecture best practices"` (ex: `event-driven microservices best practices`)
-- `"<cloud> well-architected <domaine>"` (ex: `AWS well-architected serverless`)
-- Le pattern pertinent s'il est nommé : `CQRS`, `event sourcing`, `BFF`, `hexagonal`, `saga`, `outbox`.
-
-Puis **synthétise 3-5 recommandations concrètes** et applique-les au découpage (ajout de composants, réorganisation des catégories, correction des flux). Dis à l'utilisateur ce que tu changes et pourquoi — c'est la valeur ajoutée de cette étape.
-
 ## Anti-patterns à éviter
 
 - Le « big ball de mud » : tout au même niveau, sans catégories.

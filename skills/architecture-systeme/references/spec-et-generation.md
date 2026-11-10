@@ -1,6 +1,6 @@
 # Référence technique : spec, logos, génération, vérification
 
-Ce fichier est partagé par la conversation principale (qui génère le diagramme de l'**état actuel**) et par l'agent `archi-expert-senior` (qui génère les diagrammes **cible** ou **nouveaux**). Dossier du skill : `~/.claude/skills/diagramme-architecture/`.
+Ce fichier est partagé par la conversation principale (qui génère le diagramme de l'**état actuel**) et par les agents `system-architect` et `deployment-architect` (qui écrivent les specs cible, nouvelles et de déploiement ; la génération reste à la conversation principale). Dossier du skill : `~/.claude/skills/architecture-systeme/`.
 
 ## 1. Logos
 
@@ -54,7 +54,7 @@ Les nœuds génériques sans techno précise (« Worker », « Bases & caches »
 ## 3. Génération
 
 ```bash
-py ~/.claude/skills/diagramme-architecture/scripts/build_excalidraw.py docs/architecture/spec.json -o docs/architecture/architecture.excalidraw
+py ~/.claude/skills/architecture-systeme/scripts/build_excalidraw.py docs/architecture/spec.json -o docs/architecture/architecture.excalidraw
 ```
 
 (`python` à la place de `py` hors Windows.) Le script :
@@ -69,7 +69,7 @@ Avec beaucoup de nœuds, la génération peut prendre 15-20 secondes (recherche 
 ## 4. Vérification
 
 ```bash
-py ~/.claude/skills/diagramme-architecture/scripts/check_layout.py docs/architecture/architecture.excalidraw
+py ~/.claude/skills/architecture-systeme/scripts/check_layout.py docs/architecture/architecture.excalidraw
 ```
 
 Attendu : 0 superposition, 0 étiquette masquée, 0 flèche à travers un nœud (sinon code de sortie 1). Quelques croisements (≤ 5) sont acceptables quand des flèches sautent des colonnes. Au-delà : découper en vues, réduire les flèches qui sautent des colonnes (catégorie `api`, regroupement), raccourcir les `sublabel`. Deux essais maximum, puis livrer en signalant le défaut.
