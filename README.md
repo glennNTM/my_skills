@@ -10,10 +10,12 @@ Copie le dossier du skill voulu dans `~/.claude/skills/` (global) ou `.claude/sk
 cp -r skills/<nom-du-skill> ~/.claude/skills/
 ```
 
-Certains skills s'appuient sur des **agents** (sous-agents Claude Code, chacun avec son propre prompt système). Copie-les dans `~/.claude/agents/`, puis ouvre une nouvelle session pour qu'ils soient chargés :
+Les skills qui orchestrent des **agents** les embarquent dans leur propre dossier (`<skill>/agents/`) : rien n'est installé dans `~/.claude/agents/`. Leur dossier contient un `.claude-plugin/plugin.json`, ce qui fait charger les agents par Claude Code (sous le nom `<skill>:<agent>`). Après l'installation, lance `/reload-plugins` ou ouvre une nouvelle session.
+
+Pour tout installer d'un coup :
 
 ```bash
-cp agents/*.md ~/.claude/agents/
+cp -r skills/* ~/.claude/skills/
 ```
 
 ## Skills
@@ -26,24 +28,30 @@ Planifie l'exécution d'une tâche de développement (feature, refactoring, migr
 
 Démarre le développement d'une feature à partir d'un plan validé par `planifier` : création de branche, implémentation étape par étape, lint/typecheck/tests, puis pause pour validation manuelle. Conçu pour s'enchaîner avec `planifier`.
 
-### [`diagramme-architecture`](skills/diagramme-architecture/SKILL.md)
+### [`system-design`](skills/system-design/SKILL.md)
 
-Crée un diagramme d'architecture / de system design dans **Excalidraw** (`.excalidraw` éditable, avec les logos officiels des technos) et un **`ARCHITECTURE.md`** lisible par les devs et les agents IA (briques, flux, décisions, évolutions). Trois modes, orchestrés avec 4 agents :
+A **senior software architect**: it frames requirements with questions, challenges the request, reasons in trade-offs, then designs the architecture of an existing codebase, a well-known product (Twitch, Discord…) or a new system. Covers system design, scalability, latency, caching, load balancing, databases, replication, sharding, consistency, message queues, rate limiting, CDNs, search, storage, microservices and observability.
 
-- **Codebase** : scanne le projet en lecture seule et dessine l'**état actuel** (chaque élément avec sa preuve `fichier:ligne`), puis, si l'utilisateur le veut, propose une **architecture cible** améliorée dans des fichiers séparés.
-- **Produit existant** (Twitch, Spotify, Figma…) : reconstitue sa stack à partir de sources publiques, avec niveau de confiance et sources.
-- **Conception** : conçoit un nouveau système à partir d'une description et des bonnes pratiques adaptées à l'échelle.
+Deliverables in `docs/architecture/`, written in the user's language:
 
-Le script `build_excalidraw.py` met en page automatiquement (colonnes par catégorie, flèches orthogonales, couloirs, ordre des nœuds qui minimise les croisements) ; `check_layout.py` vérifie la lisibilité sans navigateur. Avec `--open`, le diagramme s'ouvre dans VS Code (extension `pomdtr.excalidraw-editor`).
+- **always** — an editable **Excalidraw diagram** with official logos and `ARCHITECTURE.md` (current state, target, infrastructure view);
+- **in scope** — `DATA.md` (stores, replication, sharding, consistency, caching, search, storage), `API.md` (style per boundary, endpoints, conventions, rate limiting, required indexes) and `INFRASTRUCTURE.md` (load balancing, CDN, scaling, latency, reliability, deployment, observability);
+- **on request** — a professional **design-doc PDF** (project proposal or implementation phase), without logos.
 
-Nécessite les agents du dossier [`agents/`](agents/) :
+It orchestrates 8 embedded agents ([`agents/`](skills/system-design/agents/)), each solving **one problem** with only the tools it needs, under shared rules ([`rules.md`](skills/system-design/rules.md)):
 
-| Agent | Rôle |
-|---|---|
-| [`archi-explorateur-code`](agents/archi-explorateur-code.md) | Lit une codebase en lecture seule et reconstitue l'architecture réelle, chaque élément avec sa preuve |
-| [`archi-chercheur-produit`](agents/archi-chercheur-produit.md) | Recherche la stack réelle d'un produit existant, avec sources et niveau de confiance |
-| [`archi-chercheur-bonnes-pratiques`](agents/archi-chercheur-bonnes-pratiques.md) | Recommandations d'architecture adaptées à l'échelle et à l'équipe, sourcées |
-| [`archi-expert-senior`](agents/archi-expert-senior.md) | Expert senior en system design : conçoit la cible, génère et vérifie le diagramme |
+| Agent | Problem | Tools |
+|---|---|---|
+| `codebase-explorer` | What actually exists in the code? (read-only, `path:line` evidence) | Read, Grep, Glob |
+| `product-researcher` | How is this known product built? | WebSearch, WebFetch |
+| `best-practices-researcher` | What do serious teams do at this scale? | WebSearch, WebFetch |
+| `data-architect` | Where and how does the data live? | Read, Write |
+| `system-architect` | Which components, boundaries and flows? | Read, Write |
+| `api-designer` | What is the API contract? | Read, Write |
+| `infrastructure-architect` | How does it run and hold the load in production? | Read, Write |
+| `technical-writer` | Turn the design into a design doc (PDF on request) | Read, Write |
+
+Scripts (standard library only): `build_excalidraw.py` (automatic layout, `--lang en|fr`), `check_layout.py` (readability check without a browser), `excalidraw_to_svg.py` (static SVG, `--no-logos`), `build_pdf.py` (Markdown → PDF through headless Chrome/Edge). With `--open`, the diagram opens in VS Code (extension `pomdtr.excalidraw-editor`).
 
 ### [`landing-page-builder`](skills/landing-page-builder/SKILL.md)
 
